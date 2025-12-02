@@ -1,0 +1,10 @@
+Total sequence code count = 160922
+Total sequence library count = 162022
+Unaccounted sequences number 1100 which is  0.6789 %
+Number of big gap sequences is 815
+Number of oversize gap errors is 0
+Number of recursion errors in tiling is 14
+Number of unknown errors in tiling is 0
+Number of complete tilings found is 159649
+Number of partial tilings found is 1273
+Number of completely unknown sequences is 271

@@ -1,0 +1,88 @@
+Bin	Sequences	Proportion	Patterns	Percent Full
+payload_only	9985.0	0.9985	52	99.9899849774662%
+doubled_payload	14.0	0.0014	15	0.0%
+untileable_sequences	1.0	0.0001	0	0.0%
+Totals	10000.0	1.0	67
+
+
+Subclassification	Sequences	Proportion of Sample	Tile Patterns	Proportion with a Full Payload
+payload_only	9985.0	0.9985	52	0.999899849774662
+Subclassification	Sequence Count	Repeats	Proportion of payload_only	Linearity	Contains Irregular ITRs	Contains PolyX	Contains a Full Payload	Tokenized	Tile Pattern
+payload_only	8442.0	0	0.8454682023034552	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	455.0	0	0.04556835252879319	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	233.0	0	0.023335002503755635	forward_linear	False	False	True	P	Payload[4-2865](+)
+payload_only	226.0	0	0.022633950926389583	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	226.0	0	0.022633950926389583	reverse_linear	False	False	True	P	Payload[1-2864](-)
+payload_only	212.0	0	0.021231847771657486	forward_linear	False	False	True	P	Payload[5-2865](+)
+payload_only	48.0	0	0.0048072108162243365	forward_linear	False	False	True	P	Payload[2-2865](+)
+payload_only	14.0	0	0.001402103154732098	forward_linear	False	False	True	P	Payload[4-2865](+)
+payload_only	14.0	0	0.001402103154732098	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	12.0	0	0.0012018027040560841	forward_linear	False	False	True	P	Payload[1-2863](+)
+payload_only	11.0	0	0.0011016524787180772	forward_linear	False	False	True	P	Payload[3-2865](+)
+payload_only	10.0	0	0.00100150225338007	forward_linear	False	False	True	P	Payload[1-2864](+)
+payload_only	8.5	0	0.0008512769153730596	forward_linear	False	False	True	P	Payload[5-2865](+)
+payload_only	8.5	0	0.0008512769153730596	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	5.0	0	0.000500751126690035	reverse_linear	False	False	True	P	Payload[5-2864](-)
+payload_only	5.0	0	0.000500751126690035	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	5.0	0	0.000500751126690035	forward_linear	False	False	True	P	Payload[4-2865](+)
+payload_only	5.0	0	0.000500751126690035	reverse_linear	False	False	True	P	Payload[1-2864](-)
+payload_only	4.0	0	0.00040060090135202804	reverse_linear	False	False	True	P	Payload[4-2864](-)
+payload_only	4.0	0	0.00040060090135202804	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	4.0	0	0.00040060090135202804	forward_linear	False	False	True	P	Payload[5-2865](+)
+payload_only	4.0	0	0.00040060090135202804	reverse_linear	False	False	True	P	Payload[1-2864](-)
+payload_only	3.0	0	0.00030045067601402103	forward_linear	False	False	True	P	Payload[1-2862](+)
+payload_only	2.0	0	0.00020030045067601402	forward_linear	False	False	True	P	Payload[6-2865](+)
+payload_only	1.5	0	0.00015022533800701052	reverse_linear	False	False	True	P	Payload[2-2864](-)
+payload_only	1.5	0	0.00015022533800701052	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	1.5	0	0.00015022533800701052	forward_linear	False	False	True	P	Payload[2-2865](+)
+payload_only	1.5	0	0.00015022533800701052	reverse_linear	False	False	True	P	Payload[1-2864](-)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[4-2863](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2861](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2860](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	False	P	Payload[1-2843](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[4-2865](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[2-2865](+)
+payload_only	1.0	0	0.00010015022533800701	reverse_linear	False	False	True	P	Payload[3-2864](-)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2863](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	1.0	0	0.00010015022533800701	forward_linear	False	False	True	P	Payload[1-2862](+)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[5-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	reverse_linear	False	False	True	P	Payload[4-2864](-)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[4-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	reverse_linear	False	False	True	P	Payload[4-2864](-)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[2-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	reverse_linear	False	False	True	P	Payload[1-2863](-)
+payload_only	0.5	0	5.0075112669003505e-05	forward_linear	False	False	True	P	Payload[1-2865](+)
+payload_only	0.5	0	5.0075112669003505e-05	reverse_linear	False	False	True	P	Payload[1-2862](-)
+payload_only	0.5	0	5.0075112669003505e-05	reverse_linear	False	False	True	P	Payload[1-2864](-)
+
+
+Subclassification	Sequences	Proportion of Sample	Tile Patterns	Proportion with a Full Payload
+doubled_payload	14.0	0.0014	15	0.0
+Subclassification	Sequence Count	Repeats	Proportion of doubled_payload	Linearity	Contains Irregular ITRs	Contains PolyX	Contains a Full Payload	Tokenized	Tile Pattern
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	False	False	P P	Payload[5-810](+) Payload[882-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-962](+) polyA[120-None](+) Payload[961-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-458](+) polyG[86-None](+) Payload[448-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-299](+) polyA[56-None](+) Payload[297-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-2749](+) polyT[188-None](+) Payload[2744-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-2631](+) polyA[99-None](+) Payload[2623-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-2439](+) polyT[107-None](+) Payload[2427-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-227](+) polyC[72-None](+) Payload[196-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-2212](+) polyT[71-None](+) Payload[2210-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-2187](+) polyA[152-None](+) Payload[2177-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-2036](+) polyT[72-None](+) Payload[2034-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-1844](+) polyA[66-None](+) Payload[1824-2865](+)
+doubled_payload	1.0	0	0.07142857142857142	forward_linear	False	True	False	P P	Payload[1-1765](+) polyA[55-None](+) Payload[1764-2865](+)
+doubled_payload	0.5	0	0.03571428571428571	non_linear	False	True	False	P P	Payload[41-2864](-) polyC[88-None](+) Payload[1-47](-)
+doubled_payload	0.5	0	0.03571428571428571	forward_linear	False	True	False	P P	Payload[1-110](+) polyG[66-None](+) Payload[109-2865](+)
+
+
+Subclassification	Sequences	Proportion of Sample	Tile Patterns	Proportion with a Full Payload
+untileable_sequences	1.0	0.0001	0	0.0
+Subclassification	Sequence Count	Repeats	Proportion of untileable_sequences	Linearity	Contains Irregular ITRs	Contains PolyX	Contains a Full Payload	Tokenized	Tile Pattern
+untileable_sequences	1.0	-1	1.0	itr_only	False	False	False	empty	
