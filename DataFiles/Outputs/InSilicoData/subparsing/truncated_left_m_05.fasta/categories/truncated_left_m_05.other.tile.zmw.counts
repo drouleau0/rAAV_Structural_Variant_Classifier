@@ -1,0 +1,8 @@
+1 0.0001004 Payload[5-1066](+) polyC[85](+) Payload[1062-2865](+) ITR-FLIP[21-165](-)
+1 0.0001004 Payload[4-483](+) Payload[777-2865](+) ITR-FLIP[21-165](-) ITR-FLIP[21-161](-)
+1 0.0001004 Payload[1-538](+) polyT[94](+) Payload[534-2865](+) ITR-FLIP[21-165](-) ITR-FLIP[21-165](-)
+1 0.0001004 Payload[1-1753](+) polyC[80](+) Payload[1753-2864](+) ITR-FLIP[21-163](-)
+1 0.0001004 Payload[1-1545](+) polyA[104](+) Payload[1543-2865](+) ITR-FLIP[21-165](-)
+1 0.0001004 Payload[1-1191](+) polyA[81](+) Payload[1189-2865](+) ITR-FLIP[21-165](-) ITR-FLIP[21-165](-)
+1 0.0001004 Payload[1-1048](+) polyG[63](+) Payload[1042-2865](+) ITR-FLIP[21-165](-)
+0.5 0 Payload[1-288](+) Payload[468-2865](+) ITR-FLIP[21-165](-)
