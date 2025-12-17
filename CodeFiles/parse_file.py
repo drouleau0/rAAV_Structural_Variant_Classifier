@@ -77,7 +77,8 @@ class FileParser:
         if len(self.unbinned_tilelines) == 0:
             raise ValueError('modify_categories must be called before bin_tilelines, otherwise tilelines are already binned')
         for tileline in self.unbinned_tilelines:
-            tileline.category = modification_dictionary[tileline.category]
+            if tileline.category in modification_dictionary.keys():
+                tileline.category = modification_dictionary[tileline.category]
 
     def bin_tilelines(self):
         for i in range(len(self.unbinned_tilelines)-1, -1, -1): # item removal during iteration requires backwards iteration
@@ -147,15 +148,16 @@ def GetArguments():
     parser.add_argument('-payload_size', required=True, type=int,
                         help='the expected size of the payload in the run')
     # Optional Arguments
-    parser.add_argument('-group_categories', choices=['five', 'two'], default=None,
+    parser.add_argument('-group_categories', choices=['five', 'six', 'two'], default=None,
                         help='''Optionally group the vector subparser's 17 initial categories.
-                        \n The two options are five and two groups. To use five groups, use "five" following this flag.
+                        \n The three options are five, six, and two groups. To use five or six groups, use "five" or "six" respectively following this flag.
                         \n The five groupings are:
                         \n expected, expected_selfprime -> full |
                         \n itr_only, payload_only, truncated_right, truncated_left, truncated_selfprime -> truncated |
                         \n snapback, snapback_selfprime -> snapback |
                         \n truncated_sp_IPP, truncated_sp_PPI, truncated_snapback_selfprime -> truncated_snapback |
                         \n other, truncated_sp_PIPI, truncated_sp_IPIP, irregular_payload, doubled_payload -> other |
+                        \n six groups is the same, but expected and expected_selfprime are not grouped |
                         \n To output only two categories, one which contains cannonical VGs and the other containing everything else, follow this flag with "two"
                         ''')
     parser.add_argument('-bin_to_counts_files', default=True, action='store_false',
@@ -181,12 +183,10 @@ def GetArguments():
 # picked below. The option is set via user arguments, and the default is the five groups resulting from category_group_set == None
 def get_category_groups(category_group_set):
     category_groups = dict()
-    if category_group_set is None:
-        # keep the vector subparser's categories
-        category_groups = None
-    elif category_group_set == 'five':
-        # five category groups
-        category_groups.update(dict.fromkeys(['expected', 'expected_selfprime'], 'expected'))
+    if category_group_set == 'five' or category_group_set == 'six':
+        # five or six category groups, 'five' groups expected and expected_selfprime, 'six' groups does not
+        if category_group_set == 'five':
+            category_groups.update(dict.fromkeys(['expected', 'expected_selfprime'], 'expected'))
         category_groups.update(dict.fromkeys(['itr_only', 'payload_only', 'truncated_right', 'truncated_left', 'truncated_selfprime'], 'truncated'))
         category_groups.update(dict.fromkeys(['snapback', 'snapback_selfprime'], 'snapback'))
         category_groups.update(dict.fromkeys(['truncated_sp_IPP', 'truncated_sp_PPI', 'truncated_snapback_selfprime'], 'truncated_snapback'))
