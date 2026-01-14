@@ -1,0 +1,5 @@
+1 0.0000073 Payload[1797-1822](-) Payload[1680-1872](+) ITR-FLIP[21-165](-)
+1 0.0000073 Payload[139-153](-) Payload[275-1872](+) ITR-FLIP[1-145](+)
+1 0.0000073 ITR-FLIP[21-165](+) Payload[870-1872](-) Payload[862-885](+)
+0.5 0 ITR-FLIP[1-144](-) Payload[1-897](+) Payload[192-415](-)
+0.5 0.0000073 ITR-FLIP[1-144](-) Payload[1-897](+) Payload[192-414](-)
