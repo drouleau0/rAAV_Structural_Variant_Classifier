@@ -308,8 +308,11 @@ class TestVectorSubParser(unittest.TestCase):
         test_parser.run(sample)
         self.assertEqual('other', test_parser._end_state)
 
-        with self.assertRaises(ValueError):
-            test_parser.run(TileLine('2 0 foo[200](f)'))       
+        test_parser.run(TileLine('2 0 foo[200](f)'))
+        self.assertEqual('other', test_parser._end_state)
+        
+        test_parser.run(TileLine('2 0 Payload[1-100](t) foo[200](f) Payload[1-100](t)'))
+        self.assertEqual('other', test_parser._end_state)
 
 
 class TestTile(unittest.TestCase):

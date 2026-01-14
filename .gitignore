@@ -1,6 +1,7 @@
 # my stuff
 SubparserTroubleshooting/
 CodeFiles/unused_code/
+CodeFiles/ply/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
