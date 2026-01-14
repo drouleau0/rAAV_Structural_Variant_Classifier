@@ -39,6 +39,7 @@ class VectorSubParser:
     _end_state = ''
     _repeat_counter = -1
 
+	# initialize the parser with arguments. The lexer is also instantiated
     def __init__(self, lexer, require_full_payloads_in_expected=True):
         self.tokens = lexer.tokens
         # doesn't write the parsetab.py file since the table is small, negligible time is added
@@ -67,10 +68,10 @@ class VectorSubParser:
                 if i > 1 or not str.isdigit(tile): # set the end state to other and exit if anything unexpected is in the input
                     tile_line.category = 'other'
                     return
-        self.parser.parse(formatted_data.strip())
+        self.parser.parse(formatted_data.strip())  # !!this line does the actual parsing
         # if the category is other, try flipping it (to catch missing ITR on right end) (ex: ITR Payload Payload ITR Payload Payload)
         if self._end_state == 'other':
-            self.parser.parse(' '.join(formatted_data.strip().split()[::-1]))
+            self.parser.parse(' '.join(formatted_data.strip().split()[::-1]))  # !!this line does the actual parsing on the reverse of the tile pattern
         # do checks on patterns outside of the grammar's scope: full payloads in expecteds and reverse complementary adjacent payloads in snapbacks
         # then finally add the final classification from end_state to the tileline object as its category field along with the repeat_count for differentiation of recursive patterns
         if type(tile_line) is not str:  # if not a test
@@ -171,7 +172,7 @@ class VectorSubParser:
         'snapback_selfprime : I AND truncated_snapback_selfprime'
         p[0] = 'snapback_selfprime'
 
-    # Anything passed in that doesn't fit the grammar will be defined as 'other'
+    # Anything passed in that doesn't fit the grammar will be defined as 'other' instead of raising an error by restarting and parsing an empty string
     def p_error(self, _):
         self.parser.restart()
         self.parser.parse('')
