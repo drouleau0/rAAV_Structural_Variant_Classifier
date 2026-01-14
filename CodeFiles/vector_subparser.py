@@ -48,7 +48,8 @@ class VectorSubParser:
     # formats input data before running it through parsing. Raises an error for
     # tiles that aren't Payload or ITR. Also allows digits to be in the first two 
     # tiles, since those are the count and proportions in .counts file format.
-    # Consequently, can take a list of tiles with or without the counts and proportion values for ease-of-testing.
+    # The purpose of this is to allow the parser to accept tileline objects in tileline or raw string format for ease-of-testing
+    # Since raw tileline strings contain a count and proportion column, this also checks for and skips those if they are present
     def run(self, tile_line):
         VectorSubParser._end_state = ''
         VectorSubParser._repeat_counter = 0
@@ -62,13 +63,16 @@ class VectorSubParser:
                 formatted_data += 'ITR-FLIP '
             elif 'empty' in tile:
                 formatted_data += ''
-            else:
-                if i > 1 or not str.isdigit(tile):
-                    raise ValueError(f'one of the tiles ({tile}) passed into the vector subparser is not an ITR or Payload\nline of error: {data}')
+            else: 
+                if i > 1 or not str.isdigit(tile): # set the end state to other and exit if anything unexpected is in the input
+                    tile_line.category = 'other'
+                    return
         self.parser.parse(formatted_data.strip())
         # if the category is other, try flipping it (to catch missing ITR on right end) (ex: ITR Payload Payload ITR Payload Payload)
         if self._end_state == 'other':
             self.parser.parse(' '.join(formatted_data.strip().split()[::-1]))
+        # do checks on patterns outside of the grammar's scope: full payloads in expecteds and reverse complementary adjacent payloads in snapbacks
+        # then finally add the final classification from end_state to the tileline object as its category field along with the repeat_count for differentiation of recursive patterns
         if type(tile_line) is not str:  # if not a test
             self.check_snapback(tile_line)
             self.check_expected(tile_line)

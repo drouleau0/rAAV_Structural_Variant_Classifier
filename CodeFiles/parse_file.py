@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-VG_TILES = ['Payload', 'ITR-FLIP', 'poly']
+VG_TILES = ['Payload', 'ITR-FLIP', 'poly'] # tiles considered cannonical
+NONCANON_ANALYSIS = False # whether or not to do subparsing on noncannonical tiles, i.e. tiles with names not in the VG_TILES list
 
 
 class FileParser:
@@ -45,7 +46,7 @@ class FileParser:
         if len(self.unbinned_tilelines) == 0:
             raise ValueError(f'no valid vector tile patterns were found in {input_file}; make sure that it is a valid vector counts file\n non-vector counts files (plasmid, etc.) will raise this error')
     
-    # formats U lines to be run as two seperate normal lines by the process line function
+    # formats U lines to be run as two seperate normal lines by the process_line function
     def process_U_line(self, data):
         split_data = data.split(' U ')
         U_left = split_data[0].split()
@@ -57,18 +58,16 @@ class FileParser:
         return [self.process_line(' '.join(U_left)), 
                 self.process_line(' '.join(U_right))]
 
-    # formats x 2 lines to be run by the process line function
+    # formats x 2 lines to be run by the process_line function
     def process_x_2_line(self, data):
         i = data.find(' x 2')
         return self.process_line(data[:i])
 
-    # generates a Tileline object for each line, and categorizes it using a VectorSubParser object. Skips lines that have any Tile that isn't Payload, ITR-FLIP or polyX
+    # generates a Tileline object for each line, and categorizes it using a VectorSubParser object
     def process_line(self, line):
         tile_line = TileLine(line)
-        # for name in [tile.name for tile in tile_line]:
-        #     if any([name not in vg_tile and vg_tile not in name for vg_tile in VG_TILES]):
-        #         return
-        if any([tile.name.split('_')[0] not in VG_TILES and 'poly' not in tile.name for tile in tile_line]):
+        # if noncanonnical analysis is disabled skip lines that have any tile that isn't cannonical 
+        if not NONCANON_ANALYSIS and any([tile.name.split('_')[0] not in VG_TILES and 'poly' not in tile.name for tile in tile_line]):
                 return
         self.parser.run(tile_line)
         return tile_line
@@ -176,6 +175,8 @@ def GetArguments():
     parser.add_argument('-untileable_sequences', default=False, action='store_true',
                          help='if this flag is raised, then untileable sequences will be included in the output calculations and graphs. \
                             the count of untileable sequences will be sourced from the summary file with the same root filename.')
+    parser.add_argument('-noncannonical_analysis', default=False, action='store_true',
+                         help='if this flag is raised, noncanonical tiles will be considered by the subparser. This is to enable extending of the subparser grammar. As of now, all tile patterns with tiles outside of polyX, ITR or Payload will be classified as other')
     return parser
 
 
@@ -280,13 +281,16 @@ def GraphWriter(output_file):
 
 
 def main():
+	# get user arguments from the command line
     arguments = GetArguments().parse_args()
 
-    # setting argument variables
+    # setting argument variables based on user args
     INPUT_FILE = arguments.input_file
     OUTPUT_DIRECTORY = arguments.output_directory
     EXPECTED_PAYLOAD_SIZE = arguments.payload_size
     MOD_DICTIONARY = get_category_groups(arguments.group_categories)
+    global NONCANON_ANALYSIS
+    NONCANON_ANALYSIS = arguments.noncannonical_analysis
 
     # setting class variables 
     if arguments.coordinate_buffer < 0: raise ValueError('the coordinate buffer must be greater than 0')
@@ -316,9 +320,11 @@ def main():
     if arguments.untileable_sequences:
         add_empty_untileable_sequence_bin(file_parser, INPUT_FILE)
 
+	# group categories if that is being done per user arg
     if MOD_DICTIONARY:
         file_parser.group_categories(MOD_DICTIONARY)
 
+	# finalize data by placing all tileline objects with the same category field into separate bin objects then calculate bin-based data and write to file
     file_parser.bin_tilelines()
     file_parser.write_to_file(output_file)
 
