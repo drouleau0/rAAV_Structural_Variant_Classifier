@@ -32,8 +32,8 @@ class VectorLexer:
     t_P = r'(Payload)\S*'
     t_AND = r'\s'
     
-    # This token function is an example of how to classify tile patterns before parsing for noncannonical classifications. The same could be replicated for any tile such as Backbone, Helper, etc.
-    # By doing this, more classifications can be added without conflicting with the cannonical grammar or requiring combinatorial explosion of grammar rules
+    # This token function is an example of how to classify tile patterns before parsing for noncanonical classifications. The same could be replicated for any tile such as Backbone, Helper, etc.
+    # By doing this, more classifications can be added without conflicting with the canonical grammar or requiring combinatorial explosion of grammar rules
     # each token maps to a terminal token that goes right to the end state in the parser. 
     # IMPORTANT: For classifications meant to essentially override the CFG, the lex function needs to be over the others as that is how PLY determines lex function priority
     # For example, putting the t_I function above this one would result in itr_flanked_repcap never occurring as ITRs are tokenized already.
@@ -342,3 +342,4 @@ if __name__ == '__main__':
     # Testing the Parser
     my_parser = VectorSubParser(VectorLexer(), debug=True)
     my_parser.run(sample)
+
