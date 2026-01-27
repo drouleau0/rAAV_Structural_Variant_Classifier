@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-VG_TILES = ['Payload', 'ITR-FLIP', 'poly'] # tiles considered cannonical
-NONCANON_ANALYSIS = False # whether or not to do subparsing on noncannonical tiles, i.e. tiles with names not in the VG_TILES list
+VG_TILES = ['Payload', 'ITR-FLIP', 'poly'] # tiles considered canonical
+NONCANON_ANALYSIS = False # whether or not to do subparsing on noncanonical tiles, i.e. tiles with names not in the VG_TILES list
 
 
 class FileParser:
@@ -65,7 +65,7 @@ class FileParser:
     # generates a Tileline object for each line, and categorizes it using a VectorSubParser object
     def process_line(self, line):
         tile_line = TileLine(line)
-        # if noncanonnical analysis is disabled skip lines that have any tile that isn't cannonical 
+        # if noncanonical analysis is disabled skip lines that have any tile that isn't canonical 
         if not NONCANON_ANALYSIS and any([tile.name.split('_')[0] not in VG_TILES and 'poly' not in tile.name for tile in tile_line]):
                 return
         self.parser.run(tile_line)  # !! This is where the vector_subparser module is run
@@ -159,7 +159,7 @@ def GetArguments():
                         \n truncated_sp_IPP, truncated_sp_PPI, truncated_snapback_selfprime -> truncated_snapback |
                         \n other, truncated_sp_PIPI, truncated_sp_IPIP, irregular_payload, doubled_payload -> other |
                         \n six groups is the same, but expected and expected_selfprime are not grouped |
-                        \n To output only two categories, one which contains cannonical VGs and the other containing everything else, follow this flag with "two"
+                        \n To output only two categories, one which contains canonical VGs and the other containing everything else, follow this flag with "two"
                         ''')
     parser.add_argument('-bin_to_counts_files', default=True, action='store_false',
                         help='these are all output by default. If this flag is raised, no counts files will be generated\n \
@@ -177,7 +177,7 @@ def GetArguments():
     parser.add_argument('-untileable_sequences', default=False, action='store_true',
                          help='if this flag is raised, then untileable sequences will be included in the output calculations and graphs. \
                             the count of untileable sequences will be sourced from the summary file with the same root filename.')
-    parser.add_argument('-noncannonical_analysis', default=False, action='store_true',
+    parser.add_argument('-noncanonical_analysis', default=False, action='store_true',
                          help='if this flag is raised, noncanonical tiles will be considered by the subparser. This is to enable extending of the subparser grammar. As of now, all tile patterns with tiles outside of polyX, ITR or Payload will be classified as other')
     parser.add_argument('-debug', default=False, action='store_true',
                          help='if this flag is raised, detailed debug information will be printed to stdout by the vector_subparser module. Additionally, a parser.out file giving CFG information will be placed in the directory of the vector_subparser.py file')
@@ -299,7 +299,7 @@ def main():
     EXPECTED_PAYLOAD_SIZE = arguments.payload_size
     MOD_DICTIONARY = get_category_groups(arguments.group_categories)
     global NONCANON_ANALYSIS
-    NONCANON_ANALYSIS = arguments.noncannonical_analysis
+    NONCANON_ANALYSIS = arguments.noncanonical_analysis
 
     # setting class variables 
     if arguments.coordinate_buffer < 0: raise ValueError('the coordinate buffer must be greater than 0')
@@ -353,3 +353,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
