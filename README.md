@@ -28,7 +28,7 @@ In this directory is the code files, input files, and bash script used for runni
 The test code is also included.
 
 ---
-# Extending the program
+# Extending the program for noncannonical rAAV structural variant calling
 
 The manuscript for this program is primarily concerned with structural variant calling of cannonical rAAV genomes, which are rAAV genomes without contaminant DNA.
 All genomes which are determined to contain sequences that aren't within the reference AAV genome were filtered out to focus on these canonical genomes.
