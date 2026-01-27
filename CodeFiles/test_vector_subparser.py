@@ -1,4 +1,5 @@
 import unittest
+import os
 from vector_subparser import *
 from tile_classes import *
 from parse_file import *
@@ -20,13 +21,11 @@ class TestVectorSubParser(unittest.TestCase):
         self.assertEqual(' ', test_results[0]['value'])
 
         test_results = test_lexer.test('Payload Payload ITR-FLIP ITR-FLIP Payload')
-        correct_types = ['P', 'AND', 'P', 'AND', 'I', 'AND', 'I', 'AND', 'P']
-        correct_values = ['Payload', ' ', 'Payload', ' ', 'ITR-FLIP', ' ', 'ITR-FLIP', ' ', 'Payload']
-        i = 0
-        for d in test_results:
+        correct_types = ['P', 'AND', 'P', 'AND', 'I', 'AND', 'P']
+        correct_values = ['Payload', ' ', 'Payload', ' ', 'ITR-FLIP ITR-FLIP', ' ', 'Payload']
+        for i, d in enumerate(test_results):
             self.assertEqual(correct_types[i], d['type'])
             self.assertEqual(correct_values[i], d['value'])
-            i += 1
     
     def test_vector_subparser(self):
         test_parser = VectorSubParser(VectorLexer())
@@ -132,17 +131,17 @@ class TestVectorSubParser(unittest.TestCase):
         test_parser.run(test_truncated_selfprime_string)
         self.assertEqual('extended', test_parser.get_end_state())
 
-        # other tests: tests to ensure all unclassified patterns end up in other
-        # Adjacent ITRs. These shouldn't occur after preprocessing, but it's better that they
-        # end up in 'other' than get misclassified in the case of an error
+        # Adjacent ITRs. These are grouped into one token by the lexer and should be grouped accordingly.
         test_parser.run('ITR-FLIP ITR-FLIP')
-        self.assertEqual('other', test_parser.get_end_state())
+        self.assertEqual('itr_only', test_parser.get_end_state())
         test_parser.run('ITR-FLIP ITR-FLIP ITR-FLIP')
-        self.assertEqual('other', test_parser.get_end_state())
+        self.assertEqual('itr_only', test_parser.get_end_state())
         test_parser.run(('ITR-FLIP ' * 100).strip())
-        self.assertEqual('other', test_parser.get_end_state())
+        self.assertEqual('itr_only', test_parser.get_end_state())
         test_parser.run('ITR-FLIP Payload ITR-FLIP Payload ITR-FLIP ITR-FLIP')
-        self.assertEqual('other', test_parser.get_end_state())
+        self.assertEqual('expected_selfprime', test_parser.get_end_state())
+        
+        # other tests: tests to ensure all unclassified patterns end up in other
         # Adjacent Payloads greater than 2 tiles
         for i in range(3, 100):  # at one point 4x payload lengths were payload_only, and 5x were doubled_payload, so keep this test
             test_string = ('Payload ' * i).strip()
@@ -181,7 +180,7 @@ class TestVectorSubParser(unittest.TestCase):
         self.assertEqual(2, test_parser.get_repeat_count())
         test_parser.run('ITR-FLIP Payload ITR-FLIP Payload ITR-FLIP Payload ITR-FLIP Payload ITR-FLIP')
         self.assertEqual(3, test_parser.get_repeat_count())
-        test_parser.run(('ITR-FLIP' + 'Payload ITR-FLIP ' * 1000).strip())
+        test_parser.run(('ITR-FLIP ' + 'Payload ITR-FLIP ' * 1000).strip())
         self.assertEqual(999, test_parser.get_repeat_count())
 
         test_parser.run('Payload ITR-FLIP')
@@ -218,7 +217,7 @@ class TestVectorSubParser(unittest.TestCase):
         self.assertEqual(1, test_parser.get_repeat_count())
         test_parser.run('ITR-FLIP Payload Payload ITR-FLIP Payload Payload ITR-FLIP Payload Payload ITR-FLIP')
         self.assertEqual(2, test_parser.get_repeat_count())
-        test_parser.run(('ITR-FLIP' + 'Payload Payload ITR-FLIP ' * 1000).strip())
+        test_parser.run(('ITR-FLIP ' + 'Payload Payload ITR-FLIP ' * 1000).strip())
         self.assertEqual(999, test_parser.get_repeat_count())
 
         # Misc:
@@ -388,38 +387,6 @@ class TestTileLine(unittest.TestCase):
         self.assertEqual(40, x[3].coordinate_start)
         self.assertIsNone(x[3].coordinate_end)
 
-    def test_set_condensed(self):
-        # testing condensed_pattern Tile list creation
-        self.assertEqual(TileLine('1 1 ITR-FLIP[1-145](f)'), 
-                         TileLine('1 1 ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f)'), 
-                         TileLine('1 1 ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f)'), 
-                         TileLine('1 1 ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f)' + ' ITR-FLIP[1-50](t)' * 500).condensed_pattern)
-        self.assertEqual(TileLine('1 1 Payload[1-40](t) ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f) Payload[1-145](f)'), 
-                         TileLine('1 1 Payload[1-40](t) ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) Payload[1-145](f)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 Payload[1-40](t) ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f) Payload[1-145](f) ITR-FLIP[1-145](f)'), 
-                         TileLine('1 1 Payload[1-40](t) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) Payload[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 ITR-FLIP[21-165](t) Payload[1-1387](t) Payload[1388-3893](t) ITR-FLIP[1-103](t)'), 
-                         TileLine('1 1 ITR-FLIP[21-165](t) Payload[1-1387](t) polyA[23](t) polyA[24](t) Payload[1388-3893](t) ITR-FLIP[1-103](t)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 ITR-FLIP[21-165](t) Payload[1-1387](t) Payload[1388-3893](t) ITR-FLIP[1-103](t)'), 
-                         TileLine('1 1 ITR-FLIP[21-165](t) ITR-FLIP[21-165](t) ITR-FLIP[21-165](t) polyA[2](t) Payload[1-1387](t) polyA[23](t) polyA[24](t) Payload[1388-3893](t) ITR-FLIP[1-103](t)').condensed_pattern)
-        self.assertEqual('empty', 
-                         TileLine('1 1 polyA[2](t)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 Payload[1-100](t)'), 
-                         TileLine('1 1 polyA[2](t) polyA[2](t) Payload[1-100](t) polyA[2](t)').condensed_pattern)
-        self.assertEqual(TileLine('1 1 Payload[1-40](f) ITR-FLIP[1-145](t) polyA[2](f) ITR-FLIP[1-145](t) Payload[1-40](f)').condensed_pattern,
-                         TileLine('1 1 Payload[1-40](f) ITR-FLIP[1-145](t) Payload[1-40](f)'))
-        # testing the mutated_itr and contains_polymer flags
-        self.assertTrue(TileLine('1 1 ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f) ITR-FLIP[1-145](f)').irregular_itrs)
-        self.assertFalse(TileLine('1 1 ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f)').irregular_itrs)
-        self.assertFalse(TileLine('1 1 Payload[1-40](t) ITR-FLIP[1-145](f) Payload[1-40](f) ITR-FLIP[1-145](f) Payload[1-145](f)').irregular_itrs)
-        self.assertTrue(TileLine('1 1 polyA[2](t)').contains_polymer)
-        self.assertFalse(TileLine('0 0 ').contains_polymer)
-        self.assertFalse(TileLine('0 0 ').irregular_itrs)
-        self.assertTrue(TileLine('1 1 ITR-FLIP[21-165](t) ITR-FLIP[21-165](t) ITR-FLIP[21-165](t) polyA[2](t) Payload[1-1387](t) polyA[23](t) polyA[24](t) Payload[1388-3893](t) ITR-FLIP[1-103](t)').contains_polymer)
-        self.assertTrue(TileLine('1 1 ITR-FLIP[21-165](t) ITR-FLIP[21-165](t) ITR-FLIP[21-165](t) polyA[2](t) Payload[1-1387](t) polyA[23](t) polyA[24](t) Payload[1388-3893](t) ITR-FLIP[1-103](t)').irregular_itrs)
-
     def test_check_linearity(self):
         sample1 = TileLine("1 1 Backbone[200-2000](t) ITR-FLIP[1-145](f) Payload[1-2000](t) ITR-FLIP[1-10](t)")
         self.assertEqual('forward_linear', sample1.linear_status)
@@ -505,7 +472,7 @@ class TestTileBin(unittest.TestCase):
 
 
 class TestFileParser(unittest.TestCase):
-    test_file = '/analysis/Projects/Pipeline_Development/VectorSubparser2.1/DataFiles/Inputs/IntegrationTests/AllSequences.counts'
+    test_file = f'{os.path.dirname(__file__)}/../DataFiles/Inputs/IntegrationTests/AllSequences.counts'
 
     def test_FileParser_constructor(self):
         test_bins = FileParser(self.test_file)
@@ -547,7 +514,7 @@ class TestFileParser(unittest.TestCase):
 
     def test_calculate_bin_proportions(self):
         test_bins = FileParser(self.test_file, raise_error_on_low_fulls=False)
-        add_empty_untileable_sequence_bin(test_bins, self.test_file)
+        add_untileable_sequence_bin(test_bins, self.test_file)
         test_bins.bin_tilelines()
         expected_categories_proportions = {"expected":10, "expected_selfprime":126, "itr_only":54, "payload_only":20, "truncated_right":43, "truncated_left":47, 
                                            "truncated_selfprime":78, "snapback":87, "snapback_selfprime":165, "doubled_payload":170, "truncated_sp_IPP":200, "truncated_sp_PPI":225, 
@@ -562,8 +529,8 @@ class TestFileParser(unittest.TestCase):
 
     def test_group_categories(self):
         test_bins = FileParser(self.test_file, raise_error_on_low_fulls=False)
-        add_empty_untileable_sequence_bin(test_bins, self.test_file)
-        # standard modification dictionary
+        add_untileable_sequence_bin(test_bins, self.test_file)
+        # testing five group dictionary
         MOD_DICTIONARY = dict()
         MOD_DICTIONARY.update(dict.fromkeys(['expected', 'expected_selfprime'], 'expected'))
         MOD_DICTIONARY.update(dict.fromkeys(['itr_only', 'payload_only', 'truncated_right', 'truncated_left', 'truncated_selfprime'], 'truncated'))
@@ -581,8 +548,8 @@ class TestFileParser(unittest.TestCase):
             self.assertEqual(expected_pattern_counts[bin.name], bin.pattern_count, f'test_process_file failed category pattern_count check at key: {bin.name}')
 
     def test_bin_tilelines(self):
-        test_bins = FileParser(self.test_file, raise_error_on_low_fulls=False)
-        add_empty_untileable_sequence_bin(test_bins, self.test_file)
+        test_bins = FileParser(self.test_file)
+        add_untileable_sequence_bin(test_bins, self.test_file)
         test_bins.bin_tilelines()
         self.assertEqual(17, len(test_bins.bins_list))
         self.assertEqual(0, len(test_bins.unbinned_tilelines))
@@ -599,9 +566,9 @@ class TestFileParser(unittest.TestCase):
             self.assertEqual(expected_categories_counts[bin.name], bin.sequence_count, f'test_process_file failed category sequence_count check at key: {bin.name}')
             self.assertEqual(expected_pattern_counts[bin.name], bin.pattern_count, f'test_process_file failed category pattern_count check at key: {bin.name}')
 
-    def test_extended_payload_name(self):
+    def test_abnormal_payload_name(self):
         test_tileline = '14657 0.0602935 Payload_scAAV[1-100](t) polyA[1-10](t) U ITR-FLIP[21-165](t) Payload_scAAV[1-1831](f) ITR-FLIP[25-141](t) Payload_scAAV[1-1831](t) ITR-FLIP[21-165](f)'
-        parser = FileParser('', raise_error_on_low_fulls=False, require_full_payloads_in_expected=False)
+        parser = FileParser('', require_full_payloads_in_expected=False)
         lines = parser.process_U_line(test_tileline)
         self.assertEqual('payload_only', lines[0].category)
         self.assertEqual('expected_selfprime', lines[1].category)

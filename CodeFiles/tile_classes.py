@@ -90,7 +90,9 @@ class Tile:
             return '-'
     
     def __str__(self):  # returns a string; if-else for single-coordinate tiles (see line 35 below)
-        return f'{self.name}[{self.coordinate_start}-{self.coordinate_end}]({Tile.orientation_to_symbol(self.orientation)})'
+        as_string = f'{self.name}[{self.coordinate_start}-{self.coordinate_end}]({Tile.orientation_to_symbol(self.orientation)})' if self.coordinate_end \
+               else f'{self.name}[{self.coordinate_start}]({Tile.orientation_to_symbol(self.orientation)})'
+        return as_string
 
 
 # input is a single line from the input file as a string. If the input is a list, the overload emulation takes over
@@ -99,7 +101,6 @@ class Tile:
 class TileLine:
     def __init__(self, raw_data):
         self.raw_data = raw_data.strip()
-        if 'x' in raw_data: print(raw_data)
         data = raw_data.split()
         self.count = float(data.pop(0))
         self.proportion = 0
@@ -111,34 +112,8 @@ class TileLine:
         self.irregular_itrs = False
         self.contains_polymer = False
         self.snapback_pattern_with_same_strand_payloads = False
-        self.set_condensed()
         self.contains_full_payload = self.check_full_payload()
-
-    # generate a second tile list for each tileline which has its adjacent itr tiles
-    # reduced to the first itr only and the polymer tiles removed.
-    # If there are only polymer tiles it is set to the string 'empty'
-    # contains_polymer and irregular_itr booleans flag tileline properties.
-    def set_condensed(self):
-        condensed = copy.deepcopy(self.tile_list)
-        # remove polyX tiles from condensed
-        i = len(condensed) - 1
-        while i >= 0:
-            if 'poly' in condensed[i].name:
-                condensed.pop(i)
-                self.contains_polymer = True
-            i -= 1
-        # remove second ITR from adjacent ITR tiles from condensed
-        i = len(condensed) - 2
-        while i >= 0:
-            if i + 1 < len(condensed) \
-            and condensed[i].name == 'ITR-FLIP' \
-            and condensed[i + 1].name == 'ITR-FLIP':
-                self.irregular_itrs = True
-                condensed.pop(i + 1)
-            i -= 1
-        self.condensed_pattern = condensed 
-        # for the edge case of a tileline with only polyX tiles
-        if len(self.condensed_pattern) == 0: self.condensed_pattern = 'empty'
+        self.tokenized = 'not lexed'
     
     def set_linearity(self):
         linear_status = None
@@ -163,13 +138,6 @@ class TileLine:
                 return True
         else:
             return False
-
-    # returns the names of the condensed tileline as a space delimited string. 
-    # returns the list containing string 'empty' in the case of a tileline with only polymer tiles
-    def get_condensed(self):
-        if self.condensed_pattern == 'empty':
-            return ['empty']
-        return [tile.name for tile in self.condensed_pattern]
     
     def __len__(self):
         return len(self.tile_list)
@@ -192,11 +160,7 @@ class TileLine:
         
     def __str__(self):
         tile_list_string = ' '.join(str(tile) for tile in self.tile_list)
-        condensed_tile_string = ' '.join(str(tile)[0] for tile in self.condensed_pattern)
-        # set the string to empty if it's empty, instead of printing e m p t y
-        if type(self.condensed_pattern) is str: condensed_tile_string = self.condensed_pattern
-        r_string = f'{self.category}\t{self.count}\t{self.repeat_count}\t{self.proportion}\t{self.linear_status}\t{self.irregular_itrs}\t{self.contains_polymer}\t{self.contains_full_payload}\t{condensed_tile_string}\t{tile_list_string}'
-        # r_string = f'Category: {self.category}\tRepeats: {self.repeat_count}\tCount: {self.count}\tProportion_of_{self.category}_bin: {self.proportion}\tLinearity: {self.linear_status}\tIrregular_ITRs: {self.irregular_itrs}\tContains_Polymer: {self.contains_polymer}\tcontains_full_payload: {self.contains_full_payload}\tsnapback_pattern_with_same_orientation_payloads: {self.snapback_pattern_with_same_strand_payloads}\tTiles: {tile_list_string}\tCondensed: {condensed_tile_string}'
+        r_string = f'{self.category}\t{self.count}\t{self.repeat_count}\t{self.proportion}\t{self.linear_status}\t{self.irregular_itrs}\t{self.contains_polymer}\t{self.contains_full_payload}\t{self.tokenized}\t{tile_list_string}'
         return r_string
 
 
@@ -243,6 +207,6 @@ class TileLineBin:
         printed_proportion = str(round(self.proportion, 5))
         r_string = '\t'.join(['Subclassification', 'Sequences', 'Proportion of Sample', 'Tile Patterns', 'Proportion with a Full Payload']) + '\n'
         r_string += '\t'.join([f'{self.name}',f'{self.sequence_count}',f'{printed_proportion}',f'{self.pattern_count}', f'{self.full_proportion}']) + '\n'
-        r_string += '\t'.join(['Subclassification','Sequence Count', 'Repeats', f'Proportion of {self.name}', 'Linearity', 'Contains Irregular ITRs', 'Contains PolyX', 'Contains a Full Payload', 'Tokenized', 'Tile Pattern']) + '\n' 
+        r_string += '\t'.join(['Subclassification','Sequence Count', 'Repeats', f'Proportion of {self.name}', 'Linearity', 'Contains Irregular ITRs', 'Contains Homopolymer', 'Contains a Full Payload', 'Tokenized', 'Tile Pattern']) + '\n' 
         r_string += '\n'.join([str(tileline) for tileline in self.tile_line_list])
         return r_string
