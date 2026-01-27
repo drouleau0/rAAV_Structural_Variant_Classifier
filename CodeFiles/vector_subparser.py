@@ -1,5 +1,6 @@
 import ply.lex as lex
 import ply.yacc as yacc
+from tile_classes import *
 
 EXPECTED_SPECIES = ['expected', 'expected_selfprime']
 SNAPBACK_SPECIES = ['snapback', 'snapback_selfprime']
@@ -9,19 +10,65 @@ TRUNCATED_SNAPBACK_SPECIES = ['truncated_sp_IPP', 'truncated_sp_PPI', 'truncated
 class VectorLexer:
     def __init__(self):
         self.lexer = lex.lex(module=self)
+        self.irregular_itrs = False
+    
+    # return flag, reset it to false before since same lexer object used for all parsing
+    def get_irreg_itr_flag(self):
+        flag = self.irregular_itrs
+        self.irregular_itrs = False
+        return flag
 
     tokens = (
         'P',
         'AND',
-        'I'
+        'I',
+    # These tokens are for RepCap Variants
+        'R',
+        'RwI',
+        'RwP',
+        'IfR'
     )
 
-    t_P = r'(Payload)'
-    t_I = r'(ITR-FLIP)'
+    t_P = r'(Payload)\S*'
     t_AND = r'\s'
 
+    # combine adjacent ITR tiles into one I token, raise irregular_itrs flag
+    def t_I(self, t):
+        r'(ITR-FLIP\S*)(\s+ITR-FLIP\S*)*'
+        if len(t.value.split()) > 1:
+            self.irregular_itrs = True
+        return t
+    
+    # leading and trailing numbers are skipped and ignored so that tiling data can be fed into the lexer without needing to remove counts and proportions
+    def t_digit(self, t):
+        r'^([\d\.]+\s)+|(\s[\d\.]+)+$'
+        t.lexer.skip(0)
+    
+    # This token function is an example of how to classify tile patterns before parsing for noncannonical classifications. The same could be replicated for any tile such as Backbone, Helper, etc.
+    # By doing this, more classifications can be added without conflicting with the cannonical grammar or requiring combinatorial explosion of grammar rules
+    # each token maps to a terminal directly in the parser
+    def t_RepCap(self, t):
+        r'.*(RepCap).*'
+        tilenames = [tile.split('[')[0] for tile in t.value.split()]
+        if 'ITR-FLIP' not in tilenames and 'Payload' not in tilenames:
+            t.type = 'R'
+        elif 'ITR-FLIP' not in tilenames:
+            t.type = 'RwP'
+        else:
+            for i, tilename in enumerate(tilenames):
+                if tilename == 'RepCap' and 'ITR-FLIP' in tilenames[0:i] and 'ITR-FLIP' in tilenames[i:]:
+                    t.type = 'IfR'
+                    break
+            else:
+                t.type = 'RwI'
+        return t
+
+    # unknown tiles are tokenized as UNKNOWN_TILE, which leads to a parser error and subsequent classification of the tile pattern as 'other'
     def t_error(self, t):
-        print("Illegal character '%s'" % t.value[0])
+        t.value = t.value.split()[0] # t.value is the rest of the string to be lexed on error
+        t.type = 'UNKNOWN_TILE'
+        t.lexer.skip(len(t.value)+1)
+        return t
 
     # returns a list of dictionaries for testing, one dictionary for each token read
     def test(self, data):
@@ -30,6 +77,12 @@ class VectorLexer:
         for tok in self.lexer:
             test_list.append({'type': tok.type, 'value': tok.value, 'lineno': tok.lineno, 'lexpos': tok.lexpos})
         return test_list
+    
+    # simplifies output of test() to only tokens used to output tokenized versions of tile patterns to the output data file. 
+    def tokenize(self, data):
+        output_detailed = self.test(data)
+        return ' '.join([lex_dictionary['type'] for lex_dictionary in output_detailed]) # if lex_dictionary['type'] != 'AND'])
+        
 
 
 class VectorSubParser:
@@ -40,46 +93,49 @@ class VectorSubParser:
     _repeat_counter = -1
 
 	# initialize the parser with arguments. The lexer is also instantiated
-    def __init__(self, lexer, require_full_payloads_in_expected=True):
+    def __init__(self, lexer, require_full_payloads_in_expected=True, debug=False, parse_homopolymers=False):
         self.tokens = lexer.tokens
+        self.lexer = lexer
         # doesn't write the parsetab.py file since the table is small, negligible time is added
-        self.parser = yacc.yacc(module=self, debug=False, write_tables=False)
+        self.parser = yacc.yacc(module=self, debug=debug, write_tables=False)
         VectorSubParser.expected_species_have_only_full_payloads = require_full_payloads_in_expected
-
-    # formats input data before running it through parsing. Raises an error for
-    # tiles that aren't Payload or ITR. Also allows digits to be in the first two 
-    # tiles, since those are the count and proportions in .counts file format.
-    # The purpose of this is to allow the parser to accept tileline objects in tileline or raw string format for ease-of-testing
-    # Since raw tileline strings contain a count and proportion column, this also checks for and skips those if they are present
+        # whether or not to ignore homopolymer tiles, needs to be here instead of in lexer to avoid problems with hompolymer tiles between itr tiles
+        self.parse_homopolymers = parse_homopolymers
+        # whether or not to print debug output for parsing
+        self.debug = debug
+        
+    # The main function of the subparser
     def run(self, tile_line):
+        # initializing data that is separate for each subparser run 
         VectorSubParser._end_state = ''
         VectorSubParser._repeat_counter = 0
-
-        data = tile_line.split() if type(tile_line) is str else tile_line.get_condensed()
-        formatted_data = ''
-        for i, tile in enumerate(data):
-            if 'Payload' in tile:
-                formatted_data += 'Payload '
-            elif 'ITR-FLIP' in tile:
-                formatted_data += 'ITR-FLIP '
-            elif 'empty' in tile:
-                formatted_data += ''
-            else: 
-                if i > 1 or not str.isdigit(tile): # set the end state to other and exit if anything unexpected is in the input
-                    tile_line.category = 'other'
-                    return
-        self.parser.parse(formatted_data.strip())  # !!this line does the actual parsing
+        formatted_data = tile_line if type(tile_line) is str else tile_line.raw_data
+        # homopolymer tiles removed here instead of in-lexer to homopolymer tiles within ITR tiles preventing ITR regex, 
+        # and also to allow for disabling of ignoring homopolymer tiles via command line arg
+        if not self.parse_homopolymers:
+            if 'poly' in formatted_data: tile_line.contains_polymer = True
+            formatted_data = ' '.join([tile for tile in formatted_data.split() if 'poly' not in tile])
+        if self.debug: print(f'data input into parser: |{self.lexer.tokenize(formatted_data)}|')
+        # running subparser
+        self.parser.parse(formatted_data)  # !! this line does the actual parsing
         # if the category is other, try flipping it (to catch missing ITR on right end) (ex: ITR Payload Payload ITR Payload Payload)
         if self._end_state == 'other':
+            if self.debug: print(f'parsing failed for pattern:\n{formatted_data.split()}\nparsing the reverse:\n{self.lexer.tokenize(" ".join(formatted_data.strip().split()[::-1]))}')
+            VectorSubParser._repeat_counter = 0
             self.parser.parse(' '.join(formatted_data.strip().split()[::-1]))  # !!this line does the actual parsing on the reverse of the tile pattern
         # do checks on patterns outside of the grammar's scope: full payloads in expecteds and reverse complementary adjacent payloads in snapbacks
         # then finally add the final classification from end_state to the tileline object as its category field along with the repeat_count for differentiation of recursive patterns
+        if self.debug: print(f'parsing complete; result: {self._end_state}')
+        if self.debug: print(f'repeat counter result: {VectorSubParser._repeat_counter}\n\n')
         if type(tile_line) is not str:  # if not a test
             self.check_snapback(tile_line)
             self.check_expected(tile_line)
             tile_line.category = self.get_end_state()
             tile_line.repeat_count = self.get_repeat_count()
+            tile_line.tokenized = self.lexer.tokenize(formatted_data)
+            tile_line.irregular_itrs = self.lexer.get_irreg_itr_flag()
 
+    # Lines 155-159 are the noncannonical classifications, they are not used in the CFG for cannonical structural variant calling
     def p_end(self, p):
         '''S : payload_only
              | itr_only
@@ -95,7 +151,12 @@ class VectorSubParser:
              | expected_selfprime
              | truncated_snapback_selfprime
              | snapback_selfprime
-             | other'''
+             | other
+             | repcap_only
+             | repcap_with_payload
+             | repcap_with_itr
+             | ITR_flanked_repcap'''
+
         self._end_state = p[1]
     
     def p_other(self, p):
@@ -104,76 +165,114 @@ class VectorSubParser:
         p[0] = 'other'
     
     def p_payload_only(self, p):
-        'payload_only : P'
+        '''payload_only : P'''
         p[0] = 'payload_only'
+        if self.debug: self.parsing_debug_message(p)
     
     def p_itr_only(self, p):
-        'itr_only : I'
+        '''itr_only : I'''
         p[0] = 'itr_only'
+        if self.debug: self.parsing_debug_message(p)
         
     def p_doubled_payload(self, p):
-        'doubled_payload : P AND P'
+        '''doubled_payload : P AND P'''
         p[0] = 'doubled_payload'
+        if self.debug: self.parsing_debug_message(p)
     
     def p_truncated_right(self, p):
-        'truncated_right : I AND P'
+        '''truncated_right : I AND P'''
         p[0] = 'truncated_right'
+        if self.debug: self.parsing_debug_message(p)
     
     def p_truncated_left(self, p):
-        'truncated_left : P AND I'
+        '''truncated_left : P AND I'''
         p[0] = 'truncated_left'
+        if self.debug: self.parsing_debug_message(p)
         
     def p_truncated_sp_PPI(self, p):
-        'truncated_sp_PPI : P AND P AND I'
+        '''truncated_sp_PPI : P AND P AND I'''
         p[0] = 'truncated_sp_PPI'
+        if self.debug: self.parsing_debug_message(p)
     
     def p_truncated_sp_IPP(self, p):
-        'truncated_sp_IPP : I AND P AND P'
+        '''truncated_sp_IPP : I AND P AND P'''
         p[0] = 'truncated_sp_IPP'
+        if self.debug: self.parsing_debug_message(p)
     
     def p_expected(self, p):
-        'expected : I AND truncated_left'
+        '''expected : I AND truncated_left'''
         p[0] = 'expected'
+        if self.debug: self.parsing_debug_message(p)
         
     def p_truncated_selfprime(self, p):
         '''truncated_selfprime : truncated_left AND P'''
         p[0] = 'truncated_selfprime'
+        if self.debug: self.parsing_debug_message(p)
 
     def p_extended(self, p):
         '''extended : truncated_sp_PIPI
-                         | I AND truncated_selfprime
-                         | truncated_left AND truncated_selfprime
-                         | truncated_left AND extended'''
+                    | I AND truncated_selfprime
+                    | truncated_left AND truncated_selfprime
+                    | truncated_left AND extended'''
         if p[1] != 'truncated_sp_PIPI':
             VectorSubParser._repeat_counter += 1
         p[0] = 'extended'
+        if self.debug: self.parsing_debug_message(p)
     
     def p_truncated_sp_PIPI(self, p):
         '''truncated_sp_PIPI : truncated_left AND truncated_left
-                             | truncated_left AND truncated_sp_PIPI'''
+                             | truncated_sp_PIPI AND truncated_left'''
         VectorSubParser._repeat_counter += 1
         p[0] = 'truncated_sp_PIPI'
+        if self.debug: self.parsing_debug_message(p)
 
     def p_snapback(self, p):
-        'snapback : I AND truncated_sp_PPI'
+        '''snapback : I AND truncated_sp_PPI'''
         p[0] = 'snapback'
+        if self.debug: self.parsing_debug_message(p)
 
     def p_expected_selfprime(self, p):
-        'expected_selfprime : I AND truncated_sp_PIPI'
+        '''expected_selfprime : I AND truncated_sp_PIPI'''
         p[0] = 'expected_selfprime'
+        if self.debug: self.parsing_debug_message(p)
 
     def p_truncated_snapback_selfprime(self, p):
         '''truncated_snapback_selfprime : truncated_sp_PPI AND truncated_sp_PPI
                                         | truncated_sp_PPI AND truncated_snapback_selfprime'''
         VectorSubParser._repeat_counter += 1
         p[0] = 'truncated_snapback_selfprime'
+        if self.debug: self.parsing_debug_message(p)
 
     def p_snapback_selfprime(self, p):
-        'snapback_selfprime : I AND truncated_snapback_selfprime'
+        '''snapback_selfprime : I AND truncated_snapback_selfprime'''
         p[0] = 'snapback_selfprime'
+        if self.debug: self.parsing_debug_message(p)
+    
+    # These rules map directly to nonterminal RepCap tokens for noncannonical classification without conflicting with cannonical classification
+    def p_repcap_only(self, p):
+        '''repcap_only : R
+                       | R AND repcap_only'''
+        p[0] = 'repcap_only'
+        if self.debug: self.parsing_debug_message(p)
+    
+    def p_repcap_with_ITR(self, p):
+        '''repcap_with_itr : RwI'''
+        p[0] = 'repcap_with_itr'
+        if self.debug: self.parsing_debug_message(p)
 
-    # Anything passed in that doesn't fit the grammar will be defined as 'other' instead of raising an error by restarting and parsing an empty string
-    def p_error(self, _):
+    def p_repcap_with_payload(self, p):
+        '''repcap_with_payload : RwP'''
+        p[0] = 'repcap_with_payload'
+        if self.debug: self.parsing_debug_message(p)
+
+    def p_ITR_flanked_repcap(self, p):
+        '''ITR_flanked_repcap : IfR'''
+        p[0] = 'ITR_flanked_repcap'
+        if self.debug: self.parsing_debug_message(p)
+    
+    # Anything tile pattern that doesn't fit the grammar will be classified as 'other'
+    def p_error(self, p):
+        if self.debug: self.parsing_debug_message(p, error=True)
         self.parser.restart()
         self.parser.parse('')
     
@@ -181,7 +280,6 @@ class VectorSubParser:
     def get_end_state(self):
         if not self._end_state:
             raise ValueError('the end_state was empty when it was supposed to have a value')
-                # check orientation for snapback categorizations
         return self._end_state
     
     # This getter ensures that a previous end_state isn't carried over to a new data input
@@ -200,10 +298,12 @@ class VectorSubParser:
     def check_snapback(self, tile_line):
         if self._end_state not in SNAPBACK_SPECIES and self._end_state not in TRUNCATED_SNAPBACK_SPECIES:
             return
-        tile_pattern = tile_line.condensed_pattern
         is_snapbacks = []
-        for i in range(len(tile_pattern) - 1):
-            if tile_pattern[i].name == 'Payload' and tile_pattern[i + 1].name  == 'Payload':
+        tile_pattern = tile_line.tile_list
+        if not self.parse_homopolymers:
+            tile_pattern = [tile for tile in tile_pattern if 'poly' not in tile.name]
+        for i, tile in enumerate(tile_pattern):
+            if i + 1 < len(tile_pattern) and tile_pattern[i].name == 'Payload' and tile_pattern[i + 1].name  == 'Payload':
                 if tile_pattern[i].orientation == tile_pattern[i + 1].orientation:
                     is_snapbacks.append(False)
                 else:
@@ -232,12 +332,26 @@ class VectorSubParser:
             if tile.is_full == False:
                 self._end_state = 'irregular_payload'
                 return
+    
+    def parsing_debug_message(self, p, error=False):
+        if not error:
+            p = list(p)
+            for i, item in enumerate(p):
+                if item == ' ': p[i] = 'AND'
+            print(f'{p[0]} <- {p[1:]} repeats: {self._repeat_counter}')
+        else:
+            print(f'error while parsing {p}, setting result to other')
 
 
-if __name__ == '__main__':  # use this block for debugging the vector subparsing module
-    sample = 'Payload ITR-FLIP'
-    my_parser = VectorSubParser(VectorLexer())
+# use this block for debugging the vector subparsing module by setting sample to the desired input
+# accepts a list of tile names, a raw tile pattern string or a list of tileline objects
+if __name__ == '__main__':
+    sample = '108 1 Payload[1-10](t) ITR-FLIP[100-1000](t) Payload[1-10](f) asparagus'
+    # # Testing the lexer
+    my_lex = VectorLexer()
+    print(f'testing lexer on input:\n{sample}')
+    print(f'lexing result: |{my_lex.tokenize(sample)}|')
+    
+    # Testing the Parser
+    my_parser = VectorSubParser(VectorLexer(), debug=True)
     my_parser.run(sample)
-    print(my_parser.get_end_state())
-    print(my_parser.get_repeat_count())
- 

@@ -15,12 +15,11 @@ class FileParser:
     # processes the file, and stores the resulting data as a single list of all the tilelines objects.
     # These are stored as a list so that the categories can be modified using the modify_categories function prior to 
     # storing the TileLine objects into Bin objects, which are made with names based on those categories
-    def __init__(self, input_file, require_full_payloads_in_expected=True, raise_error_on_low_fulls=True):
-        self.parser = VectorSubParser(VectorLexer(), require_full_payloads_in_expected=require_full_payloads_in_expected)
+    def __init__(self, input_file, require_full_payloads_in_expected=True, raise_error_on_low_fulls=False, debug=False, parse_homopolymers=False):
+        self.parser = VectorSubParser(VectorLexer(), require_full_payloads_in_expected=require_full_payloads_in_expected, debug=debug, parse_homopolymers=parse_homopolymers)
         self.bins_list = list()
         self.unbinned_tilelines = list()
         self.raise_error_on_low_fulls = raise_error_on_low_fulls
-        # no error raise for testing
         if not os.path.isfile(input_file): 
             return
         with open(input_file, 'r') as f:
@@ -69,7 +68,7 @@ class FileParser:
         # if noncanonnical analysis is disabled skip lines that have any tile that isn't cannonical 
         if not NONCANON_ANALYSIS and any([tile.name.split('_')[0] not in VG_TILES and 'poly' not in tile.name for tile in tile_line]):
                 return
-        self.parser.run(tile_line)
+        self.parser.run(tile_line)  # !! This is where the vector_subparser module is run
         return tile_line
 
     def group_categories(self, modification_dictionary):
@@ -78,6 +77,9 @@ class FileParser:
         for tileline in self.unbinned_tilelines:
             if tileline.category in modification_dictionary.keys():
                 tileline.category = modification_dictionary[tileline.category]
+            else:  # categories outside of grouping set placed in other
+                tileline.category = 'other'
+            
 
     def bin_tilelines(self):
         for i in range(len(self.unbinned_tilelines)-1, -1, -1): # item removal during iteration requires backwards iteration
@@ -170,13 +172,17 @@ def GetArguments():
                         The default value is True (full payloads ARE required in the full (expected and expected_selfprime) categories')
     parser.add_argument('-coordinate_buffer', type=int, default=6,
                         help='modify the range coordinates must be relative to the expected payload size when considered as "full". The default is 6')
-    parser.add_argument('-silence_raise_error_on_low_fulls', default=True, action='store_false',
-                        help='use this flag to silence the error that raises when the proportion of sequences within full species\n bins (full, or expected and expected_selfprime depending on output categories option) is below 0.5')
+    parser.add_argument('-raise_error_on_low_fulls', default=False, action='store_true',
+                        help='use this flag to raise an error when the proportion of sequences within full species\n bins (full, or expected and expected_selfprime depending on output categories option) is below 0.5')
     parser.add_argument('-untileable_sequences', default=False, action='store_true',
                          help='if this flag is raised, then untileable sequences will be included in the output calculations and graphs. \
                             the count of untileable sequences will be sourced from the summary file with the same root filename.')
     parser.add_argument('-noncannonical_analysis', default=False, action='store_true',
                          help='if this flag is raised, noncanonical tiles will be considered by the subparser. This is to enable extending of the subparser grammar. As of now, all tile patterns with tiles outside of polyX, ITR or Payload will be classified as other')
+    parser.add_argument('-debug', default=False, action='store_true',
+                         help='if this flag is raised, detailed debug information will be printed to stdout by the vector_subparser module. Additionally, a parser.out file giving CFG information will be placed in the directory of the vector_subparser.py file')
+    parser.add_argument('--parse_homopolymers', default=False, action='store_true',
+                         help='if this flag is raised, homopolymer tiles will NOT be ignored completely by the subparser. The default is to ignore them')
     return parser
 
 
@@ -184,16 +190,19 @@ def GetArguments():
 # picked below. The option is set via user arguments, and the default is the five groups resulting from category_group_set == None
 def get_category_groups(category_group_set):
     category_groups = dict()
+    # five or six category groups, 'five' groups expected and expected_selfprime, 'six' groups does not
     if category_group_set == 'five' or category_group_set == 'six':
-        # five or six category groups, 'five' groups expected and expected_selfprime, 'six' groups does not
         if category_group_set == 'five':
             category_groups.update(dict.fromkeys(['expected', 'expected_selfprime'], 'expected'))
+        else:
+            category_groups['expected'] = 'expected'
+            category_groups['expected_selfprime'] = 'expected_selfprime'
         category_groups.update(dict.fromkeys(['itr_only', 'payload_only', 'truncated_right', 'truncated_left', 'truncated_selfprime'], 'truncated'))
         category_groups.update(dict.fromkeys(['snapback', 'snapback_selfprime'], 'snapback'))
         category_groups.update(dict.fromkeys(['truncated_sp_IPP', 'truncated_sp_PPI', 'truncated_snapback_selfprime'], 'truncated_snapback'))
         category_groups.update(dict.fromkeys(['other', 'extended', 'irregular_payload', 'untileable_sequences', 'doubled_payload'], 'other'))
+    # two category groups
     elif category_group_set == 'two':
-        # two category groups
         category_groups.update(dict.fromkeys(['expected', 'expected_selfprime'], 'expected'))
         category_groups.update(dict.fromkeys(['itr_only', 'payload_only', 'truncated_right', 'truncated_left', 
                                             'truncated_selfprime', 'snapback', 'snapback_selfprime', 
@@ -202,7 +211,7 @@ def get_category_groups(category_group_set):
     return category_groups
 
 
-def add_empty_untileable_sequence_bin(file_parser_obj, input_file):
+def add_untileable_sequence_bin(file_parser_obj, input_file):
     # getting summary file
     file_directory = os.path.dirname(input_file)
     for file in os.listdir(file_directory):
@@ -260,7 +269,7 @@ def GraphWriter(output_file):
               "untileable_sequences": "#f42a06",
     }
     
-    pal = [colors[label] for label in labels]
+    pal = [colors[label] if label in colors.keys() else '#000000' for label in labels ]  # unknown categories will be black
     
     sns.set_style("darkgrid", {"axes.facecolor": "0.8"})
     sns.set_palette(pal, 9)
@@ -314,17 +323,20 @@ def main():
     # nearly all of the code is run in this block
     file_parser = FileParser(INPUT_FILE, 
                              require_full_payloads_in_expected=arguments.dont_require_full_payloads, 
-                             raise_error_on_low_fulls=arguments.silence_raise_error_on_low_fulls)
+                             raise_error_on_low_fulls=arguments.raise_error_on_low_fulls,
+                             debug=arguments.debug, 
+                             parse_homopolymers = arguments.parse_homopolymers)
     
     # optionally add untileable sequence count as an empty bin
     if arguments.untileable_sequences:
-        add_empty_untileable_sequence_bin(file_parser, INPUT_FILE)
+        add_untileable_sequence_bin(file_parser, INPUT_FILE)
 
 	# group categories if that is being done per user arg
     if MOD_DICTIONARY:
         file_parser.group_categories(MOD_DICTIONARY)
 
 	# finalize data by placing all tileline objects with the same category field into separate bin objects then calculate bin-based data and write to file
+    TileLine.tokens = file_parser.parser.tokens # makes it so the condensed tilelines written to the output file don't include tokens not in the parser's grammar
     file_parser.bin_tilelines()
     file_parser.write_to_file(output_file)
 
