@@ -23,15 +23,40 @@ class VectorLexer:
         'AND',
         'I',
     # These tokens are for RepCap Variants
-        'R',
-        'RwI',
-        'RwP',
-        'IfR'
+        'repcap_no_rAAV',
+        'repcap_with_payload',
+        'repcap_with_itr',
+        'itr_flanked_repcap'
     )
 
     t_P = r'(Payload)\S*'
     t_AND = r'\s'
-
+    
+    # This token function is an example of how to classify tile patterns before parsing for noncannonical classifications. The same could be replicated for any tile such as Backbone, Helper, etc.
+    # By doing this, more classifications can be added without conflicting with the cannonical grammar or requiring combinatorial explosion of grammar rules
+    # each token maps to a terminal token that goes right to the end state in the parser. 
+    # IMPORTANT: For classifications meant to essentially override the CFG, the lex function needs to be over the others as that is how PLY determines lex function priority
+    # For example, putting the t_I function above this one would result in itr_flanked_repcap never occurring as ITRs are tokenized already.
+    def t_RepCap(self, t):
+        r'.*(RepCap).*'
+        tilenames = [tile.split('[')[0] for tile in t.value.split()]
+        if 'ITR-FLIP' not in tilenames and 'Payload' not in tilenames:
+            t.type = 'repcap_no_rAAV'
+            t.value = 'repcap_no_rAAV'
+        elif 'ITR-FLIP' not in tilenames:
+            t.type = 'repcap_with_payload'
+            t.value = 'repcap_with_payload'
+        else:
+            for i, tilename in enumerate(tilenames):
+                if tilename == 'RepCap' and 'ITR-FLIP' in tilenames[0:i] and 'ITR-FLIP' in tilenames[i:]:
+                    t.type = 'itr_flanked_repcap'
+                    t.value = 'itr_flanked_repcap'
+                    break
+            else:
+                t.type = 'repcap_with_itr'
+                t.value = 'repcap_with_itr'
+        return t
+    
     # combine adjacent ITR tiles into one I token, raise irregular_itrs flag
     def t_I(self, t):
         r'(ITR-FLIP\S*)(\s+ITR-FLIP\S*)*'
@@ -43,25 +68,6 @@ class VectorLexer:
     def t_digit(self, t):
         r'^([\d\.]+\s)+|(\s[\d\.]+)+$'
         t.lexer.skip(0)
-    
-    # This token function is an example of how to classify tile patterns before parsing for noncannonical classifications. The same could be replicated for any tile such as Backbone, Helper, etc.
-    # By doing this, more classifications can be added without conflicting with the cannonical grammar or requiring combinatorial explosion of grammar rules
-    # each token maps to a terminal directly in the parser
-    def t_RepCap(self, t):
-        r'.*(RepCap).*'
-        tilenames = [tile.split('[')[0] for tile in t.value.split()]
-        if 'ITR-FLIP' not in tilenames and 'Payload' not in tilenames:
-            t.type = 'R'
-        elif 'ITR-FLIP' not in tilenames:
-            t.type = 'RwP'
-        else:
-            for i, tilename in enumerate(tilenames):
-                if tilename == 'RepCap' and 'ITR-FLIP' in tilenames[0:i] and 'ITR-FLIP' in tilenames[i:]:
-                    t.type = 'IfR'
-                    break
-            else:
-                t.type = 'RwI'
-        return t
 
     # unknown tiles are tokenized as UNKNOWN_TILE, which leads to a parser error and subsequent classification of the tile pattern as 'other'
     def t_error(self, t):
@@ -135,7 +141,7 @@ class VectorSubParser:
             tile_line.tokenized = self.lexer.tokenize(formatted_data)
             tile_line.irregular_itrs = self.lexer.get_irreg_itr_flag()
 
-    # Lines 155-159 are the noncannonical classifications, they are not used in the CFG for cannonical structural variant calling
+    # The seperated lower rules are for noncannonical classifications. They map directly to a token from the lexer and override the normal CFG for cannonical classifications
     def p_end(self, p):
         '''S : payload_only
              | itr_only
@@ -152,12 +158,13 @@ class VectorSubParser:
              | truncated_snapback_selfprime
              | snapback_selfprime
              | other
-             | repcap_only
+             
+             | repcap_no_rAAV
              | repcap_with_payload
              | repcap_with_itr
-             | ITR_flanked_repcap'''
-
+             | itr_flanked_repcap'''
         self._end_state = p[1]
+        if self.debug: self.parsing_debug_message(p, complete=True)
     
     def p_other(self, p):
         '''other : error
@@ -248,28 +255,6 @@ class VectorSubParser:
         p[0] = 'snapback_selfprime'
         if self.debug: self.parsing_debug_message(p)
     
-    # These rules map directly to nonterminal RepCap tokens for noncannonical classification without conflicting with cannonical classification
-    def p_repcap_only(self, p):
-        '''repcap_only : R
-                       | R AND repcap_only'''
-        p[0] = 'repcap_only'
-        if self.debug: self.parsing_debug_message(p)
-    
-    def p_repcap_with_ITR(self, p):
-        '''repcap_with_itr : RwI'''
-        p[0] = 'repcap_with_itr'
-        if self.debug: self.parsing_debug_message(p)
-
-    def p_repcap_with_payload(self, p):
-        '''repcap_with_payload : RwP'''
-        p[0] = 'repcap_with_payload'
-        if self.debug: self.parsing_debug_message(p)
-
-    def p_ITR_flanked_repcap(self, p):
-        '''ITR_flanked_repcap : IfR'''
-        p[0] = 'ITR_flanked_repcap'
-        if self.debug: self.parsing_debug_message(p)
-    
     # Anything tile pattern that doesn't fit the grammar will be classified as 'other'
     def p_error(self, p):
         if self.debug: self.parsing_debug_message(p, error=True)
@@ -333,20 +318,22 @@ class VectorSubParser:
                 self._end_state = 'irregular_payload'
                 return
     
-    def parsing_debug_message(self, p, error=False):
-        if not error:
+    # message printed from parsing steps when debug is set to true
+    def parsing_debug_message(self, p, error=False, complete=False):
+        if complete:
+            print(f'END_STATE <- {p[1:]} repeats: {self._repeat_counter}')
+        elif error:
+            print(f'error while parsing {p}, setting result to other')
+        else:
             p = list(p)
             for i, item in enumerate(p):
                 if item == ' ': p[i] = 'AND'
             print(f'{p[0]} <- {p[1:]} repeats: {self._repeat_counter}')
-        else:
-            print(f'error while parsing {p}, setting result to other')
-
 
 # use this block for debugging the vector subparsing module by setting sample to the desired input
 # accepts a list of tile names, a raw tile pattern string or a list of tileline objects
 if __name__ == '__main__':
-    sample = '108 1 Payload[1-10](t) ITR-FLIP[100-1000](t) Payload[1-10](f) asparagus'
+    sample = '108 1 Payload[1-10](t) ITR-FLIP[100-1000](t) Payload[1-10](f)'
     # # Testing the lexer
     my_lex = VectorLexer()
     print(f'testing lexer on input:\n{sample}')
