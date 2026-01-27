@@ -28,18 +28,18 @@ In this directory is the code files, input files, and bash script used for runni
 The test code is also included.
 
 ---
-# Extending the program for noncannonical rAAV structural variant calling
+# Extending the program for noncanonical rAAV structural variant calling
 
-The manuscript for this program is primarily concerned with structural variant calling of cannonical rAAV genomes, which are rAAV genomes without contaminant DNA.
+The manuscript for this program is primarily concerned with structural variant calling of canonical rAAV genomes, which are rAAV genomes without contaminant DNA.
 All genomes which are determined to contain sequences that aren't within the reference AAV genome were filtered out to focus on these canonical genomes.
-Since it may be desirable by others to use this program to classify noncannonical genomes, such as those with DNA from helper plasmids used in rAAV production, it has been written such that it can be extended to do so.
+Since it may be desirable by others to use this program to classify noncanonical genomes, such as those with DNA from helper plasmids used in rAAV production, it has been written such that it can be extended to do so.
 
-There are many ways one might modify the program to do classify noncannonical genomes, but the way I found easiest was by means of a additional lexing function. With a lexing function, one can tokenize an entire tile pattern based on simple logic regarding the context a single tile. By doing this, you do not need to modify the current rules of the parser's CFG, and don't need to worry about rule ambiguity or combinatorial explosion of grammar rules. An example of doing this to classify RepCap-containing sequences into four separate classifications has already been added to vector_subparser.py module for reference along with comments.
+There are many ways one might modify the program to do classify noncanonical genomes, but the way I found easiest was by means of a additional lexing function. With a lexing function, one can tokenize an entire tile pattern based on simple logic regarding the context a single tile. By doing this, you do not need to modify the current rules of the parser's CFG, and don't need to worry about rule ambiguity or combinatorial explosion of grammar rules. An example of doing this to classify RepCap-containing sequences into four separate classifications has already been added to vector_subparser.py module for reference along with comments.
 The following steps detail how to do this:
-1. Use the -n flag when running parse_file.py on the command line to disable filtering out of noncannonical genomes. With this flag raised, any tile pattern with a tile unknown to the vector_subparser module is classified as "other". Without it, tile patterns with noncanonical sequence are removed from analysis completely.
+1. Use the -n flag when running parse_file.py on the command line to disable filtering out of noncanonical genomes. With this flag raised, any tile pattern with a tile unknown to the vector_subparser module is classified as "other". Without it, tile patterns with noncanonical sequence are removed from analysis completely.
 2. Modify the vector_subparser module's VectorLexer class to tokenize tile patterns based on the context of the tile of interest: (in the example it is RepCap) 
     1. Add one new token to the lexer class for each desired new variant classification to detect (see line 25 in vector_subparser.py)
-    2. Add the lexing function for tokenizing noncannonical variants into the tokens added in step 2.1 based on desired logic (see line 50 in vector_subparser.py) IMPORTANT: It is necessary to put such functions above the canonical related lexing functions to override them
+    2. Add the lexing function for tokenizing noncanonical variants into the tokens added in step 2.1 based on desired logic (see line 50 in vector_subparser.py) IMPORTANT: It is necessary to put such functions above the canonical related lexing functions to override them
 3. Modify the vector_subparser module's VectorSubParser class to classify the tokens that the modified VectorLexer is now generating: (comments and code for this have been added as well)
     1. (optional) new parsing rules can be added for more complex structural variants if desired. The example given in code using a lexing function shows that this should not be necessary if only the context of a noncanonical tile is of importance, but the -debug flag of the program and the __main__ function of the vector_subparser.py file can be used to give extensive debugging information to any user who wishes to delve into modifying the program’s CFG. It is recommended that such a user familiarizes themselves well with the PLY documentation.
     2. Add the new tokens from step 2 to the end state rule of the parser. (see lines 162-166 in vector_subparser.py)
