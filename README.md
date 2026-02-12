@@ -29,7 +29,7 @@ The test code is also included.
 
 ---
 
-Quick Start Guide:
+**Quick Start Guide:**
 1. Download the repo either through `git clone` or through downloading the zip file in the web browser and extracting it in your file browser
 2. Create a python virtual environment with `python -m venv venv`
 3. Activate the virtual environment with `source venv/Scripts/activate`
