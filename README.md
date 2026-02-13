@@ -1,4 +1,5 @@
-# Repository for *"Structural Analysis of Recombinant AAV Vector Genomes at Single-Molecule Resolution"*   
+# Repository for *"Structural Analysis of Recombinant AAV Vector Genomes at Single-Molecule Resolution"*  
+>last tested on python version 3.14.2
 ---
   
 Included is vector subparser program and data used as described in the research article at ____.  
