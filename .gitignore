@@ -2,6 +2,8 @@
 SubparserTroubleshooting/
 CodeFiles/unused_code/
 CodeFiles/ply/
+DataFiles/Inputs/InSilicoData.tar.gz
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
