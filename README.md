@@ -26,7 +26,11 @@ The **DataFiles** directory contains data used for integration testing as well a
 
 Also included is the sequence generator program used to generate the *in silico* data used in the manuscript, stored in the **Sequence Generator** Directory.  
 In this directory is the code files, input files, and bash script used for running the code files that was used to generate the *in silico* sequences.  
-The test code is also included.
+The test code for the sequence generator is also included.
+To run the sequence generator to recreate the in silico data used in the manuscript:
+1. Ensure the requirments in requirements.txt are installed
+2. Run the file run_generator.sh in the SequenceGenerator directory
+The output will be at the following directory: /DataFiles/Inputs/InSilicoData/raw/
 
 ---
 
