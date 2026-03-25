@@ -4,8 +4,9 @@
   
 Included is vector subparser program and data used as described in the manuscript at https://www.biorxiv.org/content/10.64898/2025.12.04.692441v1.  
 The purpose of the program is to take AAV sequences from a long-read sequencing run and categorize them into structural variants.  
+The program is written in python and run via the command line.
    
-Its required inputs are:  
+Its required arguments are:  
 1. The desired rAAV payload size  
 2. A counts file output from the tiling algorithm (https://github.com/bruc/tiling)  
 3. The directory to store output files
