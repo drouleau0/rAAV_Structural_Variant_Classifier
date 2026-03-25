@@ -24,20 +24,24 @@ The **DataFiles** directory contains data used for integration testing as well a
  
 ---
 
-Also included is the sequence generator program used to generate the *in silico* data used in the manuscript, stored in the **Sequence Generator** Directory.  
-In this directory is the code files, input files, and bash script used for running the code files that was used to generate the *in silico* sequences.  
-The test code for the sequence generator is also included.
-To run the sequence generator to recreate the in silico data used in the manuscript:
-1. Ensure the requirments in requirements.txt are installed
-2. Run the file run_generator.sh in the SequenceGenerator directory
-
-The output will be at the following directory: /DataFiles/Inputs/InSilicoData/raw/
-
----
-
 **Quick Start Guide:**
 1. Download the repo either through `git clone` or through downloading the zip file in the web browser and extracting it in your file browser
 2. Create a python virtual environment with `python -m venv venv`
 3. Activate the virtual environment with `source venv/Scripts/activate`
 4. Download dependencies to the virtual environment with `pip install -r requirements.txt`
 5. You can now run the program with the command line. To quickly see it in use, run the included quick_start.sh file with `./quick_start.sh`
+
+---
+
+Also included is the sequence generator program used to generate the *in silico* data used in the manuscript, stored in the **Sequence Generator** Directory.  
+In this directory is the code files, input files, and bash script used for running the code files that was used to generate the *in silico* sequences.  
+The test code for the sequence generator is also included.
+
+To run the sequence generator to recreate the in silico data used in the manuscript:
+1. Create a venv with the requirements installed (follow steps 1-4) in the quick start guide above
+2. Run the file run_generator.sh in the SequenceGenerator directory
+
+The output will be at the following directory: /DataFiles/Inputs/InSilicoData/raw/
+Random operations are seeded, so you will get an exact copy of the data used.
+
+---
