@@ -38,10 +38,10 @@ In this directory is the code files, input files, and bash script used for runni
 The test code for the sequence generator is also included.
 
 To run the sequence generator to recreate the in silico data used in the manuscript:
-1. Create a venv with the requirements installed (follow steps 1-4 in the quick start guide above)
+1. Create and activate a virtual environment with the requirements of this git repo installed (follow steps 1-4 in the quick start guide above)
 2. Run the file run_generator.sh in the SequenceGenerator directory
 
-The output will be at the following directory: /DataFiles/Inputs/InSilicoData/raw/
+The output will be at the following automatically created directory in this project: /DataFiles/Inputs/InSilicoData/raw/
 Random operations are seeded, so you will get an exact copy of the data used.
 
 ---
