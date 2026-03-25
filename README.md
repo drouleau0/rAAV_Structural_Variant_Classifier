@@ -2,13 +2,14 @@
 >last tested on python version 3.14.2
 ---
   
-Included is vector subparser program and data used as described in the research article at ____.  
+Included is vector subparser program and data used as described in the manuscript at https://www.biorxiv.org/content/10.64898/2025.12.04.692441v1.  
 The purpose of the program is to take AAV sequences from a long-read sequencing run and categorize them into structural variants.  
    
 Its required inputs are:  
 1. The desired rAAV payload size  
 2. A counts file output from the tiling algorithm (https://github.com/bruc/tiling)  
-3. The directory to store output files  
+3. The directory to store output files
+   
 Its outputs are:  
 1. A tsv containing structural variant classification data such as counts and proportions of each structural variant  
 2. A pdf with a bar chart and pie plot summarizing structural variant data   
