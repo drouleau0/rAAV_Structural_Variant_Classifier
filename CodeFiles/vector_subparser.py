@@ -21,41 +21,11 @@ class VectorLexer:
     tokens = (
         'P',
         'AND',
-        'I',
-    # These tokens are for RepCap Variants
-        'repcap_no_rAAV',
-        'repcap_with_payload',
-        'repcap_with_itr',
-        'itr_flanked_repcap'
+        'I'
     )
 
     t_P = r'(Payload)\S*'
     t_AND = r'\s'
-    
-    # This token function is an example of how to classify tile patterns before parsing for noncanonical classifications. The same could be replicated for any tile such as Backbone, Helper, etc.
-    # By doing this, more classifications can be added without conflicting with the canonical grammar or requiring combinatorial explosion of grammar rules
-    # each token maps to a terminal token that goes right to the end state in the parser. 
-    # IMPORTANT: For classifications meant to essentially override the CFG, the lex function needs to be over the others as that is how PLY determines lex function priority
-    # For example, putting the t_I function above this one would result in itr_flanked_repcap never occurring as ITRs are tokenized already.
-    def t_RepCap(self, t):
-        r'.*(RepCap).*'
-        tilenames = [tile.split('[')[0] for tile in t.value.split()]
-        if 'ITR-FLIP' not in tilenames and 'Payload' not in tilenames:
-            t.type = 'repcap_no_rAAV'
-            t.value = 'repcap_no_rAAV'
-        elif 'ITR-FLIP' not in tilenames:
-            t.type = 'repcap_with_payload'
-            t.value = 'repcap_with_payload'
-        else:
-            for i, tilename in enumerate(tilenames):
-                if tilename == 'RepCap' and 'ITR-FLIP' in tilenames[0:i] and 'ITR-FLIP' in tilenames[i:]:
-                    t.type = 'itr_flanked_repcap'
-                    t.value = 'itr_flanked_repcap'
-                    break
-            else:
-                t.type = 'repcap_with_itr'
-                t.value = 'repcap_with_itr'
-        return t
     
     # combine adjacent ITR tiles into one I token, raise irregular_itrs flag
     def t_I(self, t):
@@ -157,12 +127,7 @@ class VectorSubParser:
              | expected_selfprime
              | truncated_snapback_selfprime
              | snapback_selfprime
-             | other
-             
-             | repcap_no_rAAV
-             | repcap_with_payload
-             | repcap_with_itr
-             | itr_flanked_repcap'''
+             | other'''
         self._end_state = p[1]
         if self.debug: self.parsing_debug_message(p, complete=True)
     
@@ -333,7 +298,7 @@ class VectorSubParser:
 # use this block for debugging the vector subparsing module by setting sample to the desired input
 # accepts a list of tile names, a raw tile pattern string or a list of tileline objects
 if __name__ == '__main__':
-    sample = '108 1 Payload[1-10](t) ITR-FLIP[100-1000](t) Payload[1-10](f)'
+    sample = '108 1 Payload[1-10](t) foobar[1-200](t) ITR-FLIP[100-1000](t) Payload[1-10](f)'
     # # Testing the lexer
     my_lex = VectorLexer()
     print(f'testing lexer on input:\n{sample}')
