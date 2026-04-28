@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/1108616241.svg)](https://doi.org/10.5281/zenodo.19862292)
+
 # Repository for *"Structural Analysis of Recombinant AAV Vector Genomes at Single-Molecule Resolution"*  
 >last tested on python version 3.14.2
 ---
