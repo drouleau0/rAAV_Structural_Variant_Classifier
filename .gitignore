@@ -3,6 +3,20 @@ SubparserTroubleshooting/
 CodeFiles/unused_code/
 CodeFiles/ply/
 DataFiles/Inputs/InSilicoData.tar.gz
+DataFiles/Inputs/OXB_Data/tiling/bc1012.feats
+DataFiles/Inputs/OXB_Data/tiling/bc1012.gap.counts
+DataFiles/Inputs/OXB_Data/tiling/bc1012.gap.seq
+DataFiles/Inputs/OXB_Data/tiling/bc1012.tile.counts
+DataFiles/Inputs/OXB_Data/tiling/bc1012.tile.err
+DataFiles/Inputs/OXB_Data/tiling/bc1012.tiles
+DataFiles/Inputs/OXB_Data/tiling/bc1012.unmatched.seq
+DataFiles/Inputs/OXB_Data/tiling/bc1020.feats
+DataFiles/Inputs/OXB_Data/tiling/bc1020.gap.counts
+DataFiles/Inputs/OXB_Data/tiling/bc1020.gap.seq
+DataFiles/Inputs/OXB_Data/tiling/bc1020.tile.counts
+DataFiles/Inputs/OXB_Data/tiling/bc1020.tile.err
+DataFiles/Inputs/OXB_Data/tiling/bc1020.tiles
+DataFiles/Inputs/OXB_Data/tiling/bc1020.unmatched.seq
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
