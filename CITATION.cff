@@ -16,8 +16,8 @@ authors:
   - family-names: Iwuchukwu
     given-names: Ify
 title: "rAAV_Structural_Variant_Classifier"
-version: 1.0.0
-date-released: 2026-04-28
+version: 1.0.2
+date-released: 2026-05-01
 url: "https://github.com/drouleau0/rAAV_Structural_Variant_Classifier"
 repository-code: "https://github.com/drouleau0/rAAV_Structural_Variant_Classifier"
 
