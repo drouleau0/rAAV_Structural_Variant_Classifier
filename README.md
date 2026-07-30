@@ -4,7 +4,7 @@
 >last tested on python version 3.14.2
 ---
   
-Included is vector subparser program and data used as described in the manuscript at https://www.biorxiv.org/content/10.64898/2025.12.04.692441v1.  
+Included is vector subparser program and data used as described in the journal article at https://doi.org/10.1371/journal.pone.0339201.  
 The purpose of the program is to take AAV sequences from a long-read sequencing run and categorize them into structural variants.  
 The program is written in python and run via the command line.
    
