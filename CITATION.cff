@@ -1,44 +1,71 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite the associated manuscript as below."
+message: "If you use this software, please cite the journal article as below."
 authors:
   - family-names: Rouleau
     given-names: David
+    orcid: "https://orcid.org/0009-0008-9603-0605"
   - family-names: Lata
     given-names: Dimpal
+    orcid: "https://orcid.org/0000-0001-8556-7978"
   - family-names: Dollive
     given-names: Serena
   - family-names: Bruccoleri
-    given-names: Robert
+    given-names: Robert E.
+    orcid: "https://orcid.org/0009-0001-5687-4554"
   - family-names: Van Lieshout
     given-names: Laura
   - family-names: Golebiowski
     given-names: Diane
+    orcid: "https://orcid.org/0000-0002-5550-7883"
   - family-names: Iwuchukwu
-    given-names: Ify
+    given-names: Ifeyinwa
 title: "rAAV_Structural_Variant_Classifier"
 version: 1.0.2
 date-released: 2026-05-01
 url: "https://github.com/drouleau0/rAAV_Structural_Variant_Classifier"
 repository-code: "https://github.com/drouleau0/rAAV_Structural_Variant_Classifier"
-
+license: MIT
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.19862292"
+    description: "Archived parsing codebase, analyzed data, and sequence generation code"
+  - type: doi
+    value: "10.5281/zenodo.20072387"
+    description: "Archived code and data for breakpoint analysis"
 preferred-citation:
   type: article
+  title: "Structural analysis of recombinant AAV vector genomes at single-molecule resolution"
   authors:
     - family-names: Rouleau
       given-names: David
+      orcid: "https://orcid.org/0009-0008-9603-0605"
     - family-names: Lata
       given-names: Dimpal
+      orcid: "https://orcid.org/0000-0001-8556-7978"
     - family-names: Dollive
       given-names: Serena
     - family-names: Bruccoleri
-      given-names: Robert
+      given-names: Robert E.
+      orcid: "https://orcid.org/0009-0001-5687-4554"
     - family-names: Van Lieshout
       given-names: Laura
     - family-names: Golebiowski
       given-names: Diane
+      orcid: "https://orcid.org/0000-0002-5550-7883"
     - family-names: Iwuchukwu
-      given-names: Ify
-  doi: "10.64898/2025.12.04.692441"
-  journal: "bioRxiv"
-  title: "Structural Analysis of Recombinant AAV Vector Genomes at Single-Molecule Resolution"
-  year: 2025
+      given-names: Ifeyinwa
+  journal: "PLOS ONE"
+  publisher:
+    name: "Public Library of Science"
+  year: 2026
+  month: 7
+  volume: 21
+  issue: 7
+  start: "e0339201"
+  issn: "1932-6203"
+  doi: "10.1371/journal.pone.0339201"
+  url: "https://doi.org/10.1371/journal.pone.0339201"
+  identifiers:
+    - type: doi
+      value: "10.64898/2025.12.04.692441"
+      description: "Preprint version (bioRxiv)"
