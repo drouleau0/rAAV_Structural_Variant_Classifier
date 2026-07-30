@@ -24,7 +24,7 @@ version: 1.0.2
 date-released: 2026-05-01
 url: "https://github.com/drouleau0/rAAV_Structural_Variant_Classifier"
 repository-code: "https://github.com/drouleau0/rAAV_Structural_Variant_Classifier"
-license: MIT
+license: Apache-2.0
 identifiers:
   - type: doi
     value: "10.5281/zenodo.19862292"
